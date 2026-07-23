@@ -35,7 +35,8 @@
 - `app/retrieval.py` — TF-IDF (semantic) vector store + cosine similarity.
 - `app/bm25.py` — Okapi BM25 lexical retriever.
 - `app/fusion.py` — Reciprocal Rank Fusion.
-- `app/rerank.py` — second-stage re-ranker (lexical; cross-encoder in prod).
+- `app/rerank.py` — second-stage re-rankers: `LexicalReRanker` (default) and
+  `CrossEncoderReRanker` (neural, production), chosen via `make_reranker`.
 - `app/hybrid.py` — hybrid retriever = TF-IDF + BM25 → RRF → re-rank.
 - `app/backends/langchain_chroma.py` — optional LangChain + Chroma + real embeddings.
 - `app/llm.py` — OpenAI or deterministic offline model, same interface.
@@ -53,7 +54,7 @@ nothing downstream — a clean seam and a demonstration of dependency inversion.
 
 ## Roadmap (natural next steps)
 - ✅ Hybrid retrieval (BM25 + TF-IDF) with Reciprocal Rank Fusion — **done**.
-- ✅ Second-stage re-ranking — **done** (lexical; cross-encoder wiring next).
+- ✅ Second-stage re-ranking — **done** (lexical default + neural cross-encoder).
 - Dense embeddings by default (sentence-transformers) via the Chroma backend.
 - Streaming responses (SSE) and multi-turn memory.
 - LLM-as-judge scorer in the eval harness (faithfulness/groundedness).

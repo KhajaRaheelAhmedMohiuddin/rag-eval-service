@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     rrf_k: int = 60           # RRF smoothing constant
     candidate_k: int = 10     # shortlist size passed to the re-ranker
 
+    # Re-ranker: "lexical" (default, dependency-free) or "cross_encoder"
+    # (neural, needs requirements-prod.txt).
+    reranker: str = "lexical"
+    cross_encoder_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
     # Grounding: refuse to answer when the best chunk scores below this.
     # Tuned from the score distribution: in-scope questions score ~0.28-0.48,
     # out-of-scope ones ~0.15, so 0.20 separates them cleanly.

@@ -64,6 +64,8 @@ def build_retriever(chunks: list[Chunk], cfg: Settings):
             rrf_k=cfg.rrf_k,
             candidate_k=cfg.candidate_k,
             use_rerank=cfg.use_rerank,
+            reranker_kind=cfg.reranker,
+            cross_encoder_model=cfg.cross_encoder_model,
         )
     raise ValueError(f"Unknown retrieval_mode: {mode!r}")
 

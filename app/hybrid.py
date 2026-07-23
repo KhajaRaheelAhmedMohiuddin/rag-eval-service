@@ -29,10 +29,12 @@ class HybridRetriever:
         rrf_k: int = 60,
         candidate_k: int = 10,
         use_rerank: bool = True,
+        reranker_kind: str = "lexical",
+        cross_encoder_model: str | None = None,
     ):
         from app.bm25 import BM25Retriever
         from app.fusion import reciprocal_rank_fusion
-        from app.rerank import LexicalReRanker
+        from app.rerank import make_reranker
 
         self.chunks = chunks
         self._by_id = {c.id: c for c in chunks}
@@ -41,7 +43,7 @@ class HybridRetriever:
         self.candidate_k = candidate_k
         self.rrf_k = rrf_k
         self._rrf = reciprocal_rank_fusion
-        self.reranker = LexicalReRanker() if use_rerank else None
+        self.reranker = make_reranker(reranker_kind if use_rerank else "none", cross_encoder_model)
 
     def retrieve(self, query: str, k: int = 4) -> list[RetrievedChunk]:
         n = len(self.chunks)

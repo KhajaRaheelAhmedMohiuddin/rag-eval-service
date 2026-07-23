@@ -91,8 +91,19 @@ Retrieval runs in two stages (configurable via `RETRIEVAL_MODE` / `USE_RERANK`):
    (not raw score) combines two signals with incomparable scales and is robust
    when one retriever misses a phrasing the other catches.
 2. **Re-ranking** — a second-stage re-ranker rescoring the fused shortlist for
-   precision at the top. The default is a dependency-free lexical re-ranker; the
-   production stack swaps in a cross-encoder (`requirements-prod.txt`).
+   precision at the top. Two implementations behind one interface:
+   - **lexical** (default) — dependency-free, query-term coverage + phrase bonus.
+   - **cross_encoder** (production) — a neural [cross-encoder](app/rerank.py) that
+     jointly encodes each `(query, passage)` pair (`sentence-transformers`). More
+     accurate, more expensive — so it only runs on the small fused shortlist.
+
+   Enable the neural re-ranker:
+
+   ```bash
+   pip install -r requirements-prod.txt
+   # in .env:
+   RERANKER=cross_encoder
+   ```
 
 Compare strategies yourself:
 
@@ -118,7 +129,7 @@ hybrid + rerank        1.000   1.000
 |---|---|
 | RAG pipeline: chunking, embeddings, vector store, retrieval | [`chunking.py`](app/chunking.py), [`retrieval.py`](app/retrieval.py), [`backends/langchain_chroma.py`](app/backends/langchain_chroma.py) |
 | **Hybrid search + Reciprocal Rank Fusion** | [`bm25.py`](app/bm25.py), [`fusion.py`](app/fusion.py), [`hybrid.py`](app/hybrid.py) |
-| **Re-ranking** (+ cross-encoder path) | [`rerank.py`](app/rerank.py) |
+| **Re-ranking**: lexical + **neural cross-encoder** | [`rerank.py`](app/rerank.py) |
 | Retrieval metrics (hit-rate, **MRR**) + A/B harness | [`eval/scorers.py`](eval/scorers.py), [`eval/compare_retrieval.py`](eval/compare_retrieval.py) |
 | Prompt engineering + **versioning** | [`prompts/`](app/prompts), [`config.py`](app/config.py) |
 | Guardrails, PII handling, responsible AI | [`guardrails.py`](app/guardrails.py) |
