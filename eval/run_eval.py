@@ -13,7 +13,13 @@ import json
 from pathlib import Path
 
 from app.rag import RagService
-from eval.scorers import aggregate, answer_correct, refusal_correct, retrieval_hit
+from eval.scorers import (
+    aggregate,
+    answer_correct,
+    reciprocal_rank,
+    refusal_correct,
+    retrieval_hit,
+)
 
 EVAL_DIR = Path(__file__).resolve().parent
 GOLDEN = EVAL_DIR / "golden.json"
@@ -36,6 +42,7 @@ def run() -> dict:
                 "grounded": result.grounded,
                 "needs_human_review": result.needs_human_review,
                 "retrieval_hit": retrieval_hit(item["expected_source"], retrieved_sources),
+                "reciprocal_rank": reciprocal_rank(item["expected_source"], retrieved_sources),
                 "answer_correct": answer_correct(result.answer, item["answer_keywords"]),
                 "refusal_correct": refusal_correct(item["should_refuse"], result.grounded),
             }
@@ -53,6 +60,7 @@ def write_report(rows: list[dict], summary: dict, prompt_version: str) -> None:
         f"- Prompt version: `{prompt_version}`",
         f"- Items: **{summary['n']}**",
         f"- Retrieval hit-rate: **{summary['retrieval_hit_rate']:.0%}**",
+        f"- MRR: **{summary['mrr']:.3f}**",
         f"- Answer accuracy: **{summary['answer_accuracy']:.0%}**",
         f"- Refusal accuracy: **{summary['refusal_accuracy']:.0%}**",
         "",

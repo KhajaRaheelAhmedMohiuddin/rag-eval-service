@@ -9,5 +9,8 @@ run:
 eval:
 	python -m eval.run_eval
 
+compare:
+	python -m eval.compare_retrieval
+
 test:
 	pytest -q

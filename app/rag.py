@@ -47,6 +47,27 @@ def load_documents(data_dir: Path) -> list[Chunk]:
     return chunks
 
 
+def build_retriever(chunks: list[Chunk], cfg: Settings):
+    """Construct the retriever named by cfg.retrieval_mode."""
+    mode = cfg.retrieval_mode
+    if mode == "tfidf":
+        return TfidfRetriever(chunks)
+    if mode == "bm25":
+        from app.bm25 import BM25Retriever
+
+        return BM25Retriever(chunks)
+    if mode == "hybrid":
+        from app.hybrid import HybridRetriever
+
+        return HybridRetriever(
+            chunks,
+            rrf_k=cfg.rrf_k,
+            candidate_k=cfg.candidate_k,
+            use_rerank=cfg.use_rerank,
+        )
+    raise ValueError(f"Unknown retrieval_mode: {mode!r}")
+
+
 class RagService:
     def __init__(self, cfg: Settings = settings, llm: LLM | None = None, data_dir: Path | None = None):
         self.cfg = cfg
@@ -54,7 +75,7 @@ class RagService:
         chunks = load_documents(data_dir or DATA_DIR)
         if not chunks:
             raise RuntimeError("No documents found to index.")
-        self.retriever = TfidfRetriever(chunks)
+        self.retriever = build_retriever(chunks, cfg)
         self.prompt_template = cfg.load_prompt()
 
     def _format_prompt(self, question: str, retrieved: list[RetrievedChunk]) -> str:
@@ -64,7 +85,9 @@ class RagService:
     def answer(self, question: str, top_k: int | None = None) -> Answer:
         k = top_k or self.cfg.top_k
         retrieved = self.retriever.retrieve(question, k=k)
-        top_score = retrieved[0].score if retrieved else 0.0
+        # Ground on the strongest semantic match in the set — robust to re-ranking,
+        # which may not leave the highest-cosine chunk in slot 0.
+        top_score = max((r.score for r in retrieved), default=0.0)
         grounded = is_grounded(top_score, self.cfg.grounding_threshold)
 
         if not grounded:

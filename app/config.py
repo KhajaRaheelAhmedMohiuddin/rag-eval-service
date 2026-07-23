@@ -22,6 +22,13 @@ class Settings(BaseSettings):
     chunk_size: int = 500
     chunk_overlap: int = 80
 
+    # Retrieval strategy: "tfidf" (semantic only), "bm25" (lexical only),
+    # or "hybrid" (both, fused with Reciprocal Rank Fusion).
+    retrieval_mode: str = "hybrid"
+    use_rerank: bool = True   # second-stage re-ranker on the fused shortlist
+    rrf_k: int = 60           # RRF smoothing constant
+    candidate_k: int = 10     # shortlist size passed to the re-ranker
+
     # Grounding: refuse to answer when the best chunk scores below this.
     # Tuned from the score distribution: in-scope questions score ~0.28-0.48,
     # out-of-scope ones ~0.15, so 0.20 separates them cleanly.

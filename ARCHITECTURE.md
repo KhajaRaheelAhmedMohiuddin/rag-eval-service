@@ -5,11 +5,12 @@
   documents ───► │  chunking    │  overlapping windows, traceable ids
                  └──────┬───────┘
                         ▼
-                 ┌──────────────┐
-                 │  retrieval   │  TF-IDF vectors + cosine  (or LangChain+Chroma)
-                 └──────┬───────┘
-     question ─────────►│  top-k chunks + scores
-                        ▼
+                 ┌───────────────────────────────┐
+                 │  hybrid retrieval             │
+     question ──►│  BM25 (lexical) ┐             │
+                 │  TF-IDF (semantic) ┘─► RRF ─► re-rank ─► top-k
+                 └──────┬────────────────────────┘
+                        ▼  chunks + calibrated cosine scores
                  ┌──────────────┐   grounded?  no ─► refuse (+ HITL)
                  │  grounding   │──────────────────────────────────►
                  └──────┬───────┘
@@ -31,7 +32,11 @@
 
 ## Key modules
 - `app/chunking.py` — recursive character splitter with overlap.
-- `app/retrieval.py` — TF-IDF vector store + cosine similarity (default backend).
+- `app/retrieval.py` — TF-IDF (semantic) vector store + cosine similarity.
+- `app/bm25.py` — Okapi BM25 lexical retriever.
+- `app/fusion.py` — Reciprocal Rank Fusion.
+- `app/rerank.py` — second-stage re-ranker (lexical; cross-encoder in prod).
+- `app/hybrid.py` — hybrid retriever = TF-IDF + BM25 → RRF → re-rank.
 - `app/backends/langchain_chroma.py` — optional LangChain + Chroma + real embeddings.
 - `app/llm.py` — OpenAI or deterministic offline model, same interface.
 - `app/guardrails.py` — PII redaction + grounding check.
@@ -47,8 +52,9 @@ Both satisfy the same `retrieve(query, k)` interface, so swapping them changes
 nothing downstream — a clean seam and a demonstration of dependency inversion.
 
 ## Roadmap (natural next steps)
-- Hybrid retrieval (BM25 + dense) with Reciprocal Rank Fusion.
-- Cross-encoder re-ranking of retrieved chunks.
+- ✅ Hybrid retrieval (BM25 + TF-IDF) with Reciprocal Rank Fusion — **done**.
+- ✅ Second-stage re-ranking — **done** (lexical; cross-encoder wiring next).
+- Dense embeddings by default (sentence-transformers) via the Chroma backend.
 - Streaming responses (SSE) and multi-turn memory.
 - LLM-as-judge scorer in the eval harness (faithfulness/groundedness).
 - Auth, per-tenant indexes, and observability (traces + metrics).

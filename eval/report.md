@@ -3,6 +3,7 @@
 - Prompt version: `qa_v2`
 - Items: **8**
 - Retrieval hit-rate: **100%**
+- MRR: **1.000**
 - Answer accuracy: **88%**
 - Refusal accuracy: **100%**
 
